@@ -1,0 +1,246 @@
+---
+title: <center><FONT COLOR="sky-blue">Situación del Sector Aéreo-19</FONT></center>
+author: "Miembros del grupo: \n\n\n **Bernardo Cartusciello** (cartusci@alumni.uv.es) \n\n **Vicente Celis** (viceron@alumni.uv.es) \n\n **Jose Fernandez** (jofercar@alumni.uv.es) \n\n Universitat de València"
+
+date: "Diciembre de 2020 (actualizado el `r format(Sys.time(), '%d-%m-%Y')`)"
+output:
+  html_document:
+    theme: paper
+    highlight: textmate 
+    toc: true
+    toc_depth: 3 
+    toc_float: 
+      collapsed: true
+      smooth_scroll: true
+    self_contained: true
+    number_sections: false
+    df_print: kable
+    code_download: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r packages-setup, include = FALSE}
+library(readxl)
+library(rvest)    # For scraping the web
+library(tidyr)    # Functions to tidy our data
+library(dplyr)    # Pipe operator, tibble handling
+library(ggplot2) 
+library(tidyverse)
+library(quantmod)
+library(dygraphs)
+library(dplyr)
+library(data.table)
+library(xts)
+library(htmlwidgets)
+library(rnaturalearth)
+library(gganimate)
+library(plotly)
+```
+
+```{r chunk-setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE, 
+                      #results = "hold",
+                      cache = FALSE, cache.path = "/caches/", comment = "#>",
+                      #fig.width = 7, #fig.height= 7,   
+                      #out.width = 7, out.height = 7,
+                      collapse = TRUE,  fig.show = "hold",
+                      fig.asp = 7/9, out.width = "60%", fig.align = "center")
+knitr::opts_chunk$set(dev = "png", dev.args = list(type = "cairo-png"))
+```
+
+```{r options-setup, include = FALSE}
+options(scipen = 999) #- para quitar la notación científica
+options("yaml.eval.expr" = TRUE) 
+```
+
+```{r chunk_setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE,
+                      cache = FALSE, cache.path = "/caches/", comment = "#>",
+                      collapse = TRUE,  fig.show = "hold",
+                      fig.asp = 7/9, out.width = "80%", fig.align = "center")
+```
+
+```{r klippy, echo = FALSE}
+klippy::klippy(position = c("top", "right")) #- remotes::install_github("rlesur/klippy")
+```
+
+-----------------
+
+Trabajo  elaborado para la asignatura "Programación y manejo de datos en la era del Big Data" de la Universitat de València durante el curso 2020-2021. La página web de la asignatura puede verse aquí: <https://bernicartusciello.github.io/intro-ds-20-21-web/>. Los trabajos de mis compañeros de curso pueden verse [aquí](https://perezp44.github.io/intro-ds-20-21-web/07-trabajos.html).
+
+---------------
+
+<br>
+
+##   <FONT COLOR="sky-blue">1. Introducción</FONT>
+
+
+En el siguiente trabajo se relacionara el mercado bursátil con el sector aéreo, de forma más concreta se hablará de la evolución de los precios de las acciones de cinco grandes aerolíneas a lo largo de los últimos 5 años. Se podrá observar, cómo se comparan varias empresas aéreas en distintos continentes y cómo se han visto influido los precios de sus acciones por diferentes shocks en estos años.
+
+A lo largo de este trabajo, se puede observar cómo las aerolíneas pertenecen a un sector muy volátil donde se podrá ver reflejado en las gráficas los altos y bajos en los precios que han tenido en los últimos años. Más recientemente, como el COVID ha perjudicado a estas empresas en el mercado bursátil. A causa de estas situaciones muchas de las aerolineas se han visto gravemente perjudicadas ya que durante esta última crisis se prohibieron los vuelos a causa del gran nivel de contagio que tiene este virus, por lo cual los gobiernos querían evitar que se siguiera propagando el virus afectando gravemente a los ingresos de estas empresas, provocando que tengan pedir ayudas y subsidios a los gobiernos para no entrar en quiebras.
+
+```{r, echo=FALSE, eval=TRUE}
+knitr::include_graphics (here::here( "/imagenes","American-Airlines-737-Max.jpg"))
+
+```
+
+##   <FONT COLOR="sky-blue">2. Evolución Precios del Sector</FONT>. {.tabset}
+
+### <FONT COLOR="sky-blue">**Información**</FONT>
+
+En este gráfico se puede observar los precios de las acciones de las 5 aerolíneas: American Airlines, Air France, Lufthansa, Ryanair y United Airlines. Podemos destacar como en los años 2017 y finales del 2018 las empresas presentaron un auge en el valor de cotización y esto debido distintas razones como la globalización, el aumento de los viajes de ocio y negocios, y el crecimiento de las compañías de bajo coste, todos estos causantes del importante aumento de vuelos que se ha experimentado a nivel mundial. Sin embargo, en los periodos siguientes cabe recalcar el acontecimiento que causó que estos números pasarán a la historia como la mayor caída de la bolsa en las acciones del sector aéreo, la pandemia del coronavirus. El virus fue un importante causante de la baja de estos precios debido al cierre de fronteras entre los los países y el impedimento de movilidad de la población mundial. 
+
+Otros de los motivos por el cual se prevé una proyección más negativa en el sector es que gracias al confinamiento que sucedió a causa del covid-19 muchos de las empresas comenzaron a implementar el teletrabajo, a raíz de esto las empresas se dieron cuenta de que las reuniones por videollamadas eran igual de eficientes como si los trabajadores estuviesen presentes. Por lo cual, muchas empresas ahora prefieren cerrar sus tratos de manera online en vez de tener que desplazar a sus trabajadores que esto genera  grandes costes y disminuyen los beneficios que pueden tener a futuro.
+
+### <FONT COLOR="sky-blue">**Gráfico**</FONT>
+```{r, echo = FALSE, include = TRUE}
+precio_ac <- read_excel("./datos/aerolineas.xlsx")
+
+media <- mean(precio_ac$`precio AAL`, na.rm = TRUE)    
+desviacion <- sd(precio_ac$`precio AAL`, na.rm = TRUE) 
+
+p1 <- gather(precio_ac, aereo, precios, `precio AAL`:`precio AIRF` )
+
+p1 %>% filter(aereo %in% c("precio AAL", "precio LHA", "precio UAL", "precio RYA","precio AIRF")) %>% 
+  ggplot(aes(x = fecha, y = precios , color = aereo)) + geom_line() 
+
+```
+
+
+##   <FONT COLOR="sky-blue">3. Evolución Precios por Empresa</FONT> {.tabset}
+
+En este caso, se puede observar de manera más detallada la variación que ha tenido cada compañía aérea a lo largo del tiempo. Se separó de la gráfica conjunta de las 5 aerolíneas a una gráfica por cada empresa.  
+
+En estas gráficas individuales, se puede destacar de forma más precisa como durante el periodo 2017 y 2018, estas acciones tuvieron un auge en sus precios alcanzando su máximo dentro de los últimos cinco años, como fue el caso de American Airlines un precio aproximado de 60 euros, al igual que United Airlines de 100 euros. Por otro lado, a raíz de la crisis del covid-19 se puede destacar unas de las mayores caídas de los precios de las acciones de las distintas aerolíneas a causa de la limitación de movilidad de las personas por el confinamiento. 
+
+Ryanair ha sido una de las pocas empresas áreas que se ha recuperado después de la crisis alcanzando niveles parecidos antes de la pandemia, ya que al comienzo de la apertura de los aeropuertos fue la que obtuvo una mayor cantidad de ventas comparado al resto de aerolíneas, que puede ser debido a su servicio low-cost. 
+
+También se puede observar como ha comenzado la recuperación de los precios de estas aerolíneas, aunque no ha sido mucho se puede notar que está teniendo leve subida. Además, analizamos la situación de United Airlines y American Airlines que tuvieron las mayores caídas de los precios en relación a lo demás pudiendo ser una de las razones de que estas pertenezcan a las 4 aerolíneas más grandes del mundo en cuanto a ingresos y a flota aérea. 
+
+### <FONT COLOR="sky-blue">**Gráfica**</FONT>
+
+```{r, echo = FALSE, include = TRUE}
+p1 %>%
+  ggplot(aes(x = fecha, y = precios, color = aereo)) +
+  geom_line() +
+  facet_wrap(~aereo,scales = 'free_y') +
+  theme_classic() +
+  labs(x = 'fecha',
+       y = "Precio acción",
+       title = "Sector Aereo")
+```
+
+### <FONT COLOR="sky-blue">**Gráfica Dinámica**</FONT>
+```{r precio23,  echo = FALSE, include = TRUE}
+
+
+precio23 <- ggplot(p1, aes(fecha , precios,  color= aereo))  + geom_line() + 
+  labs(title = "Sector Aéreo por empresa",
+     caption = "Elaboración propia",
+    y = "precios", x = "fecha") +  
+  theme(legend.position = "none") + scale_x_continuous(breaks = seq()) + 
+  facet_wrap(~aereo, nrow = 4, ncol = 3)  + transition_reveal(fecha)
+```
+
+```{r echo= FALSE, eval = TRUE, out.width="80%"}
+precio23
+```
+
+##   <FONT COLOR="sky-blue">4. Gráficas de Velas de American Airlines</FONT>  ##
+
+Aquí se puede observar un gráfico de velas de la acción de American Airlines. De forma más detallada se aprecia la apertura y el cierre diario de la acción, al igual que se detalla el precio máximo y el precio mínimo que alcanzado que ha tenido la acción a lo largo del día. La gráfica de velas es la principal gráfica que usan los inversionistas y los traders para detallar el precio de una acción, como proporciona tanta información al solo colocar el mouse encima de una vela es una de las herramientas más eficientes para ellos. 
+
+
+
+```{r, echo = FALSE, include = TRUE}
+start <- as.Date("2015-01-01")
+end <- as.Date("2020-01-12")
+
+getSymbols("AAL", src = "yahoo", from = start, to = end)
+
+
+american <- AAL[,c(1,2,3,4)]
+names(american) <- c("Open", "Hight", "Low", "Close")
+
+american_1 <-
+  dygraph(american,
+          main = "American Airlines") %>%
+  dyOptions(gridLineColor = "white") %>%
+  dyRoller(rollPeriod = 7)  %>%
+  dyRangeSelector(height = 20) %>%
+  dyRangeSelector(dateWindow = c("2015-01-01", "2020-01-12")) %>%
+  dyCandlestick()
+
+american_1
+```
+
+
+##   <FONT COLOR="sky-blue">5. Trayectorias Europeas de United Airlines</FONT>
+
+Se puede observar en este mapa las rutas de United Airlines hacia el continente europeo y destacar las principales ciudades HUB las cuales son Washington DC (Capital de los Estados Unidos) y New York (La ciudad sede del gran centro financiero del país). United Airlines ofrece varios vuelos directos hacia ciudades como Madrid, Londres, Roma y París que por culpa de la situación pandémica se vieron gravemente afectados tras la cancelación de los vuelos. Las ayudas que se les otorgó a este sector por parte del gobierno fueron de gran ayuda para frenar el desplome de las empresas tras el cese de la actividad aérea. Sin embargo, estas ayudas fueron suficientes hasta cierto punto ya que finalizaron a mediados del mes de agosto, situación que obligó a la empresa en septiembre reducir su plantilla en aproximadamente 13.000 empleados, casi 7.000 auxiliares de vuelo. 
+
+```{r, echo = FALSE, include = TRUE}
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+p <- ggplot(data = world) + geom_sf(fill = "papayawhip") +
+  labs(title = "Rutas Aereas United Airlines",
+       caption = "Elaboracion propia")
+p + theme(panel.grid.major = element_line(color = gray(.8), linetype = "dashed", size = 0.05),
+          panel.background = element_rect(fill = "lightblue1")) + coord_sf(xlim = c(-130, 40.00), ylim = c(23, 60), expand = FALSE) +
+  annotate("segment", x = -72.5, xend = -4, y = 41.1, yend = 40.5, colour = "black") +
+  annotate("point", x = -72.5, y = 41.1 ) + annotate("point", x = -4, y = 40.5 ) +
+  annotate(geom = "text", label = "New York", size = 3.2, x = -72.5, y = 43) +
+  annotate(geom = "text", label = "Madrid", size = 3.2, x = -4, y = 42.5) +
+  annotate("segment", x = -77, xend = -1, y = 39, yend = 51.5, colour = "black") +
+  annotate("point", x = -77, y = 39) + annotate("point", x = -1, y = 51.5) +
+  annotate(geom = "text", label = "Washington DC", size = 3.2, x = -76, y = 37.5) +
+  annotate(geom = "text", label = "Londres", size = 3.2, x = -1, y = 55) +
+  annotate("segment", x = -72.5, xend = 3, y = 41.1, yend = 48) + annotate("point", x = 3, y = 48) +
+  annotate(geom = "text", label = "Paris", size = 3.2, x = 3, y = 50) +
+  annotate("segment", x = -77, xend = 11.5, y = 39, yend = 44) + annotate("point", x =11.5, y = 44) +
+  annotate(geom = "text", label = "Roma", size = 3.2, x = 11.5, y = 46.5) 
+
+
+```
+
+
+
+
+
+##   <FONT COLOR="sky-blue">6. Conclusión</FONT>
+
+Por un lado, hemos podido comprobar que las aerolíneas pertenecen a un sector muy volátil y por ello, se han visto gravemente perjudicadas hasta el punto de tener que ser rescatadas por los gobiernos para no entrar en quiebra.
+
+En el primer gráfico, cabe destacar la caída de United Airlines y la fuerte recuperación de Ryanair situándose en niveles similares de antes de la pandemia.
+
+En el gráfico dinámico de American Airlines hemos observado como transcurre la cotización de la acción de manera más específica, día a día desde enero 2015 hasta enero 2020.
+
+En el mapa de las rutas aéreas se ven reflejados los trayectos que realiza la compañía United Airlines entre Estados Unidos y Europa.
+
+Por otro lado, las empresas han comprobado(forzadamente) a causa del CODVID-19 que el teletrabajo es una forma de reducir costes totales. A raíz de esto, podríamos decir que ha marcado un antes y un después en la visión empresarial. Se contempla una gran incertidumbre a corto plazo.
+
+
+
+##   <FONT COLOR="sky-blue">7. Referencias Bibliográficas</FONT>
+
+Para la realización del trabajo he utilizado:
+
+- [Market Business Insider](https://markets.businessinsider.com/)
+
+- [Investing](https://es.investing.com/)
+
+- [Rpubs](https://rpubs.com/luis-fernandezt/610466)
+----------------
+
+<br><br>
+
+Para acabar este chunk para incluir tu `session info`:
+
+```{r}
+sessioninfo::session_info() %>% details::details(summary = 'current session info') 
+```
+
+
+
+
+
