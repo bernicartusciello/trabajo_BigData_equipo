@@ -58,7 +58,7 @@ options("yaml.eval.expr" = TRUE)
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE,
                       cache = FALSE, cache.path = "/caches/", comment = "#>",
                       collapse = TRUE,  fig.show = "hold",
-                      fig.asp = 7/9, out.width = "80%", fig.align = "center")
+                      fig.asp = 7/9, out.width = "60%", fig.align = "center")
 ```
 
 ```{r klippy, echo = FALSE}
@@ -84,6 +84,7 @@ A lo largo de este trabajo, se puede observar cómo las aerolíneas pertenecen a
 knitr::include_graphics (here::here( "/imagenes","American-Airlines-737-Max.jpg"))
 
 ```
+
 
 ##   <FONT COLOR="sky-blue">2. Evolución Precios del Sector</FONT>. {.tabset}
 
@@ -132,26 +133,22 @@ p1 %>%
 ```
 
 ### <FONT COLOR="sky-blue">**Gráfica Dinámica**</FONT>
-```{r precio23,  echo = FALSE, include = TRUE}
+```{r precio23}
 
 
 precio23 <- ggplot(p1, aes(fecha , precios,  color= aereo))  + geom_line() + 
-  labs(title = "Sector Aéreo por empresa",
+  labs(title = "Sector Aéreo",
      caption = "Elaboración propia",
     y = "precios", x = "fecha") +  
   theme(legend.position = "none") + scale_x_continuous(breaks = seq()) + 
-  facet_wrap(~aereo, nrow = 4, ncol = 3)  + transition_reveal(fecha)
+  facet_wrap(~aereo, scales = 'free_y')  + transition_reveal(fecha)
 ```
 
 ```{r echo= FALSE, eval = TRUE, out.width="80%"}
 precio23
 ```
-
-##   <FONT COLOR="sky-blue">4. Gráficas de Velas de American Airlines</FONT>  ##
-
-Aquí se puede observar un gráfico de velas de la acción de American Airlines. De forma más detallada se aprecia la apertura y el cierre diario de la acción, al igual que se detalla el precio máximo y el precio mínimo que alcanzado que ha tenido la acción a lo largo del día. La gráfica de velas es la principal gráfica que usan los inversionistas y los traders para detallar el precio de una acción, como proporciona tanta información al solo colocar el mouse encima de una vela es una de las herramientas más eficientes para ellos. 
-
-
+##   <FONT COLOR="sky-blue">4. Gráficas de Velas de American Airlines</FONT>
+De manera dinámica, podemos detallar la acción de American Airlines. Aquí se puede apreciar su precio de apertura y cierre diario, así como su pico máximo y mínimo.
 
 ```{r, echo = FALSE, include = TRUE}
 start <- as.Date("2015-01-01")
@@ -181,11 +178,17 @@ american_1
 Se puede observar en este mapa las rutas de United Airlines hacia el continente europeo y destacar las principales ciudades HUB las cuales son Washington DC (Capital de los Estados Unidos) y New York (La ciudad sede del gran centro financiero del país). United Airlines ofrece varios vuelos directos hacia ciudades como Madrid, Londres, Roma y París que por culpa de la situación pandémica se vieron gravemente afectados tras la cancelación de los vuelos. Las ayudas que se les otorgó a este sector por parte del gobierno fueron de gran ayuda para frenar el desplome de las empresas tras el cese de la actividad aérea. Sin embargo, estas ayudas fueron suficientes hasta cierto punto ya que finalizaron a mediados del mes de agosto, situación que obligó a la empresa en septiembre reducir su plantilla en aproximadamente 13.000 empleados, casi 7.000 auxiliares de vuelo. 
 
 ```{r, echo = FALSE, include = TRUE}
+
+
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+class(world)
+names(world)
+
 p <- ggplot(data = world) + geom_sf(fill = "papayawhip") +
-  labs(title = "Rutas Aereas United Airlines",
+  labs(title = "Rutas Aereas United Arilines",
        caption = "Elaboracion propia")
-p + theme(panel.grid.major = element_line(color = gray(.8), linetype = "dashed", size = 0.05),
+p + theme(panel.grid.major = element_line(color = gray(.8), linetype = "dashed", size = 0.03),
           panel.background = element_rect(fill = "lightblue1")) + coord_sf(xlim = c(-130, 40.00), ylim = c(23, 60), expand = FALSE) +
   annotate("segment", x = -72.5, xend = -4, y = 41.1, yend = 40.5, colour = "black") +
   annotate("point", x = -72.5, y = 41.1 ) + annotate("point", x = -4, y = 40.5 ) +
@@ -198,11 +201,8 @@ p + theme(panel.grid.major = element_line(color = gray(.8), linetype = "dashed",
   annotate("segment", x = -72.5, xend = 3, y = 41.1, yend = 48) + annotate("point", x = 3, y = 48) +
   annotate(geom = "text", label = "Paris", size = 3.2, x = 3, y = 50) +
   annotate("segment", x = -77, xend = 11.5, y = 39, yend = 44) + annotate("point", x =11.5, y = 44) +
-  annotate(geom = "text", label = "Roma", size = 3.2, x = 11.5, y = 46.5) 
-
-
+  annotate(geom = "text", label = "Roma", size = 3.2, x = 11.5, y = 46.5)
 ```
-
 
 
 
